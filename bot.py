@@ -12,16 +12,16 @@ class Bot(commands.Bot):
         self.nickname=os.environ['BOT_NICK']
         self.prefix=os.environ['BOT_PREFIX']
         self.initial_channels=[os.environ['CHANNEL']]
-        self.ranking = {}
-        self.leaderboard={
+        self.rankings = {}
+        self.top_rankings={
             "gold": '',
             "silver": '',
             "bronze": ''
         }
         self.moves_easy = {
-            "punches": 3,
-            "kicks": 5,
-            "bites": 4
+            "punches": 4,
+            "kicks": 6,
+            "bites": 5
         }
         self.matches = {}
         super().__init__(token=self.token, prefix=self.prefix, initial_channels=self.initial_channels)
@@ -38,18 +38,18 @@ class Bot(commands.Bot):
         
     #----------COMMANDS----------#
     @commands.command()
-    async def champions(self, ctx: commands.Context):
-        rank = sorted(self.ranking.items(), key=lambda x: x[1], reverse=True)[:3]
+    async def leaderboard(self, ctx: commands.Context):
+        rank = sorted(self.rankings.items(), key=lambda x: x[1], reverse=True)[:3]
         leaders = [('','')] * 3
         for i in range(len(rank)):
             leaders[i] = rank[i]
         gold = leaders[0][0] if leaders[0][0] != '' else 'NA'
         silver = leaders[1][0] if leaders[1][0] != '' else 'NA'
         bronze = leaders[2][0] if leaders[2][0] != '' else 'NA'
-        self.leaderboard["gold"] = gold
-        self.leaderboard["silver"] = silver
-        self.leaderboard["bronze"] = bronze
-        await ctx.send(f'🥇: {self.leaderboard["gold"]}, 🥈: {self.leaderboard["silver"]}, 🥉: {self.leaderboard["bronze"]}')
+        self.top_rankings["gold"] = gold
+        self.top_rankings["silver"] = silver
+        self.top_rankings["bronze"] = bronze
+        await ctx.send(f'🥇: {self.top_rankings["gold"]}, 🥈: {self.top_rankings["silver"]}, 🥉: {self.top_rankings["bronze"]}')
 
     # @commands.command()
     # async def check_matches(self, ctx):
@@ -89,16 +89,16 @@ class Bot(commands.Bot):
         if round == 3 or self.matches[match_id][fighter][1] == 2 or self.matches[match_id][versus][1] == 2:
             if self.matches[match_id][fighter][1] == 2:
                 await ctx.send(f'{fighter} WINS! 🏆')
-                if fighter not in self.ranking:
-                    self.ranking[fighter] = 1
+                if fighter not in self.rankings:
+                    self.rankings[fighter] = 1
                 else:
-                    self.ranking[fighter] += 1
+                    self.rankings[fighter] += 1
             else:
                 await ctx.send(f'{versus} WINS! 🏆')
-                if versus not in self.ranking:
-                    self.ranking[versus] = 1
+                if versus not in self.rankings:
+                    self.rankings[versus] = 1
                 else:
-                    self.ranking[versus] += 1
+                    self.rankings[versus] += 1
             
             del self.matches[match_id]
 
@@ -186,7 +186,7 @@ class Bot(commands.Bot):
         else:
             atk = "🦷"
         
-        commentary += f'{rand_ftr} {atk} {rand_dfs}. '
+        commentary += f'{rand_ftr} {atk}s {rand_dfs}. '
         
         if fh <= 0:
             self.matches[match_id][versus][1] += 1
