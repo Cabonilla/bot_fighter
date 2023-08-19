@@ -19,9 +19,19 @@ class Bot(commands.Bot):
             "bronze": ''
         }
         self.moves_easy = {
-            "punches": 4,
-            "kicks": 6,
-            "bites": 5
+            "punches": [4, '👊'],
+            "kicks": [6, '🦶'],
+            "bites": [5, '🦷']
+        }
+        # self.moves_easy = {
+        #     "punches": 4,
+        #     "kicks": 6,
+        #     "bites": 5
+        # }
+        self.moves_medium = {
+            "backhand slaps": 8,
+            "roundhouse kicks": 9,
+            "headbutts": 10
         }
         self.matches = {}
         super().__init__(token=self.token, prefix=self.prefix, initial_channels=self.initial_channels)
@@ -169,7 +179,7 @@ class Bot(commands.Bot):
         prtcpts = [fighter, versus] #as in, participants
         rand_ftr = random.choice(prtcpts)
         rand_atk = random.choice(list(moveset.keys()))
-        rand_dmg = moveset[rand_atk]
+        rand_dmg = moveset[rand_atk][0]
         if prtcpts.index(rand_ftr) == 0:
             rand_dfs = prtcpts[1]
             self.matches[match_id][versus][0] -= rand_dmg
@@ -179,14 +189,10 @@ class Bot(commands.Bot):
             self.matches[match_id][fighter][0] -= rand_dmg
             # print("fh ", fh)
 
-        if rand_atk == "kicks":
-            atk = "🦵"
-        elif rand_atk == "punches":
-            atk = "👊"
-        else:
-            atk = "🦷"
+        if rand_atk:
+            atk = moveset[rand_atk][1]
         
-        commentary += f'{rand_ftr} {atk}s {rand_dfs}. '
+        commentary += f'{rand_ftr} {atk} {rand_dfs}. '
         
         if fh <= 0:
             self.matches[match_id][versus][1] += 1
