@@ -23,11 +23,6 @@ class Bot(commands.Bot):
             "kicks": [6, '🦶'],
             "bites": [5, '🦷']
         }
-        # self.moves_easy = {
-        #     "punches": 4,
-        #     "kicks": 6,
-        #     "bites": 5
-        # }
         self.moves_medium = {
             "backhand slaps": 8,
             "roundhouse kicks": 9,
@@ -61,9 +56,9 @@ class Bot(commands.Bot):
         self.top_rankings["bronze"] = bronze
         await ctx.send(f'🥇: {self.top_rankings["gold"]}, 🥈: {self.top_rankings["silver"]}, 🥉: {self.top_rankings["bronze"]}')
 
-    # @commands.command()
-    # async def check_matches(self, ctx):
-    #     print(self.matches)
+    @commands.command()
+    async def check_matches(self, ctx):
+        print(self.matches)
 
     # @commands.command()
     # async def simulate_fight(self, ctx: commands.Context, arg):
@@ -75,9 +70,11 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def fight(self, ctx: commands.Context, arg):
-        await ctx.send(f'💥 @{ctx.author.name} VS {arg} 💥')
         fighter = "@" + ctx.author.name
         versus = arg
+        all_matches = [key for inner_dict in self.matches.values() for key in inner_dict if key.startswith('@')]
+        await ctx.send(f'💥 @{ctx.author.name} VS {arg} 💥')
+
         if not self._get_matchkey(fighter):
             match_id = str(uuid.uuid1().hex)
             self.matches[match_id] = {}
@@ -111,26 +108,6 @@ class Bot(commands.Bot):
                     self.rankings[versus] += 1
             
             del self.matches[match_id]
-
-        # if fighter not in self.matches[match_id]:
-        #     self._add_fighters_to_match(fighter, versus, match_id)
-        #     self._select_round(fighter, versus, match_id)
-        #     round = self.matches[match_id]['round']
-        #     await ctx.send(f'ROUND {round} ... START! 🔔')
-        #     # await ctx.send(f"👍 {fighter} KO's 👎 {versus}!")
-        #     print(self.matches)
-        #     return
-        # elif fighter in self.matches[match_id] and self.matches[match_id]['round'] <= 3:
-        #     self._select_round(fighter, versus)
-        #     round = self.fights[fighter]['round']
-        #     await ctx.send(f'ROUND {round} ... START! 🔔')
-        #     # await ctx.send(f"👍 {fighter} KO's 👎 {versus}!")
-        #     if round == 3:
-        #         await ctx.send(f'{fighter} WINS! 🏆')
-        #         print("RESET")
-        #         del self.matches[match_id]
-        #     print(self.matches)
-        #     return
                 
     @commands.command()
     async def surrender(self, ctx: commands.Context):
@@ -171,28 +148,26 @@ class Bot(commands.Bot):
     def _commence_fight(self, fighter, versus, moveset, match_id, commentary=''):
         fh = self.matches[match_id][fighter][0]
         vh = self.matches[match_id][versus][0]
-        fw = self.matches[match_id][fighter][1]
-        vw = self.matches[match_id][versus][1]
 
         # print(self.matches[match_id])
+        if fh > 0 and vh > 0:
+            prtcpts = [fighter, versus] #as in, participants
+            rand_ftr = random.choice(prtcpts)
+            rand_atk = random.choice(list(moveset.keys()))
+            rand_dmg = moveset[rand_atk][0]
+            if prtcpts.index(rand_ftr) == 0:
+                rand_dfs = prtcpts[1]
+                self.matches[match_id][rand_dfs][0] -= rand_dmg
+                # print("vh ", vh)
+            else:
+                rand_dfs = prtcpts[0]
+                self.matches[match_id][rand_dfs][0] -= rand_dmg
+                # print("fh ", fh)
 
-        prtcpts = [fighter, versus] #as in, participants
-        rand_ftr = random.choice(prtcpts)
-        rand_atk = random.choice(list(moveset.keys()))
-        rand_dmg = moveset[rand_atk][0]
-        if prtcpts.index(rand_ftr) == 0:
-            rand_dfs = prtcpts[1]
-            self.matches[match_id][versus][0] -= rand_dmg
-            # print("vh ", vh)
-        else:
-            rand_dfs = prtcpts[0]
-            self.matches[match_id][fighter][0] -= rand_dmg
-            # print("fh ", fh)
-
-        if rand_atk:
-            atk = moveset[rand_atk][1]
-        
-        commentary += f'{rand_ftr} {atk} {rand_dfs}. '
+            if rand_atk:
+                atk = moveset[rand_atk][1]
+            
+            commentary += f'{rand_ftr} {atk} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). '
         
         if fh <= 0:
             self.matches[match_id][versus][1] += 1
