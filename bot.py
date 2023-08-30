@@ -3,6 +3,7 @@ import random
 import uuid
 from twitchio.ext import commands
 import csv
+from typing import List, Dict
 
 class Bot(commands.Bot):
     #----------INIT----------#
@@ -23,11 +24,11 @@ class Bot(commands.Bot):
             "kicks": [6, '🦶'],
             "bites": [5, '🦷']
         }
-        self.moves_medium = {
-            "backhand slaps": 8,
-            "roundhouse kicks": 9,
-            "headbutts": 10
-        }
+        # self.moves_medium = {
+        #     "backhand slaps": 8,
+        #     "roundhouse kicks": 9,
+        #     "headbutts": 10
+        # }
         self.matches = {}
         super().__init__(token=self.token, prefix=self.prefix, initial_channels=self.initial_channels)
 
@@ -35,6 +36,7 @@ class Bot(commands.Bot):
     async def event_ready(self):
         print(f'{self.nickname} HAS COMMENCED!')
         await bot.connected_channels[0].send(f'{self.nickname} HAS COMMENCED! 🥊')
+        self._read_db('botfighter.csv')
 
     # async def event_message(self, message):
     #     if message.echo:
@@ -75,6 +77,7 @@ class Bot(commands.Bot):
     async def fight(self, ctx: commands.Context, arg):
         fighter = "@" + ctx.author.name
         versus = arg
+
         # all_fighters = [key for inner_dict in self.matches.values() for key in inner_dict if key.startswith('@')]
         # # all_fighters = {k: v for k, v in self.matches.values()}
         # print(all_fighters)
@@ -125,14 +128,18 @@ class Bot(commands.Bot):
                 await ctx.send(f'{fighter} WINS! 🏆')
                 if fighter not in self.rankings:
                     self.rankings[fighter] = 1
+                    self._write_db('botfighter.csv', fighter, self.rankings[fighter] )
                 else:
                     self.rankings[fighter] += 1
+                    self._write_db('botfighter.csv', fighter, self.rankings[fighter] )
             else:
                 await ctx.send(f'{versus} WINS! 🏆')
                 if versus not in self.rankings:
                     self.rankings[versus] = 1
+                    self._write_db('botfighter.csv', versus, self.rankings[versus] )
                 else:
                     self.rankings[versus] += 1
+                    self._write_db('botfighter.csv', versus, self.rankings[versus] )
             
             del self.matches[match_id]
                 
@@ -189,7 +196,7 @@ class Bot(commands.Bot):
     def _commence_fight(self, fighter, versus, moveset, match_id, commentary=''):
         fh = self.matches[match_id][fighter][0]
         vh = self.matches[match_id][versus][0]
-
+        # possible combo system using trees
         # print(self.matches[match_id])
         if fh > 0 and vh > 0:
             prtcpts = [fighter, versus] #as in, participants
@@ -220,6 +227,51 @@ class Bot(commands.Bot):
             return commentary
         else:
             return self._commence_fight(fighter, versus, moveset, match_id, commentary)
+    
+    # def _write_csv(self, fighter, wins):
+    #     # with open('botfighter.csv', 'a', newline='') as file:
+    #     #     writer = csv.writer(file)
+    #     #     writer.writerow([fighter, self.rankings[fighter]])
+    #     with open('botfighter.csv', newline='') as file:
+    #         reader = csv.DictReader(file)
+    #         for r in reader:
+    #             if r['fighter'] == fighter:
+    #                 with open('botfighter.csv', 'r', newline='') as rfile:
+    #                     writer = csv.DictWriter(rfile)
+    #                     r['wins'] = wins
+
+    def _read_db(self, sheet):
+        file = open(sheet, 'r', encoding='utf8')
+        reader = csv.DictReader(file)
+        for r in reader:
+            print(r)
+        file.close()
+
+    def _write_db(self, sheet, fighter, wins):
+        rows: List[Dict[str, int]] = []
+
+        # Read existing data
+        if os.path.exists(sheet):
+            with open(sheet, 'r', newline='') as file:
+                reader = csv.DictReader(file)
+                rows = list(reader)
+
+        # Update or append data
+        updated = False
+        for row in rows:
+            if row['fighter'] == fighter:
+                row['wins'] = int(row['wins']) + 1
+                updated = True
+                break
+
+        if not updated:
+            rows.append({'fighter': fighter, 'wins': 1})
+
+        # Write back to the CSV file
+        with open(sheet, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['fighter', 'wins'])
+            writer.writeheader()
+            writer.writerows(rows)
 
 bot = Bot()
 bot.run()
