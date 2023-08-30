@@ -4,6 +4,7 @@ import uuid
 from twitchio.ext import commands
 import csv
 from typing import List, Dict
+import math
 
 class Bot(commands.Bot):
     #----------INIT----------#
@@ -42,6 +43,9 @@ class Bot(commands.Bot):
     #     if message.echo:
     #         return
     #     await self.handle_commands(message)
+    async def event_command_error(self, ctx, error: Exception) -> None:
+        if isinstance(error, commands.CommandOnCooldown):
+            await ctx.send("BUFFERING NEXT MATCH. WAIT {:n} SECONDS. ⏲".format(math.floor(error.retry_after)))
     #----------COMMANDS----------#
     @commands.command()
     async def leaderboard(self, ctx: commands.Context):
@@ -96,7 +100,7 @@ class Bot(commands.Bot):
     #     # print(f'@{ctx.author.name}')
     #     # print(matchkey)
     #     return self._commence_fight(f'@{ctx.author.name}', arg, self.moves_easy, matchkey)
-
+    @commands.cooldown(rate=1, per=10, bucket=commands.Bucket.channel)
     @commands.command()
     async def fight(self, ctx: commands.Context, arg):
         fighter = "@" + ctx.author.name
