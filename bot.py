@@ -46,6 +46,30 @@ class Bot(commands.Bot):
     @commands.command()
     async def leaderboard(self, ctx: commands.Context):
         rank = sorted(self.rankings.items(), key=lambda x: x[1], reverse=True)[:3]
+        print(self.rankings)
+        print(rank)
+        leaders = [('','')] * 3
+        for i in range(len(rank)):
+            leaders[i] = rank[i]
+        gold = leaders[0][0] if leaders[0][0] != '' else 'NA'
+        silver = leaders[1][0] if leaders[1][0] != '' else 'NA'
+        bronze = leaders[2][0] if leaders[2][0] != '' else 'NA'
+        self.top_rankings["gold"] = gold
+        self.top_rankings["silver"] = silver
+        self.top_rankings["bronze"] = bronze
+        await ctx.send(f'🥇: {self.top_rankings["gold"]}, 🥈: {self.top_rankings["silver"]}, 🥉: {self.top_rankings["bronze"]}')
+    
+    @commands.command()
+    async def leaderboardalltime(self, ctx: commands.Context):
+        prelim_rank = []
+
+        # Read existing data
+        if os.path.exists('botfighter.csv'):
+            with open('botfighter.csv', 'r', newline='') as file:
+                reader = csv.DictReader(file)
+                prelim_rank = list(reader)
+
+        rank = sorted([(item['fighter'], int(item['wins'])) for item in prelim_rank], key=lambda x: x[1], reverse=True)[:3]
         leaders = [('','')] * 3
         for i in range(len(rank)):
             leaders[i] = rank[i]
@@ -103,6 +127,9 @@ class Bot(commands.Bot):
             elif validatecode == "conflict_versuswrong":
                 await ctx.send(f'{versus} IS NOT YOUR CURRENT OPPONENT. 🛑')
                 return
+            elif validatecode == "conflict_stophittingyourself":
+                await ctx.send('STOP HITTING YOURSELF! 🛑')
+                return
 
         if not self._get_matchkey(fighter):
             match_id = str(uuid.uuid1().hex)
@@ -128,18 +155,18 @@ class Bot(commands.Bot):
                 await ctx.send(f'{fighter} WINS! 🏆')
                 if fighter not in self.rankings:
                     self.rankings[fighter] = 1
-                    self._write_db('botfighter.csv', fighter, self.rankings[fighter] )
+                    self._write_db('botfighter.csv', fighter)
                 else:
                     self.rankings[fighter] += 1
-                    self._write_db('botfighter.csv', fighter, self.rankings[fighter] )
+                    self._write_db('botfighter.csv', fighter)
             else:
                 await ctx.send(f'{versus} WINS! 🏆')
                 if versus not in self.rankings:
                     self.rankings[versus] = 1
-                    self._write_db('botfighter.csv', versus, self.rankings[versus] )
+                    self._write_db('botfighter.csv', versus)
                 else:
                     self.rankings[versus] += 1
-                    self._write_db('botfighter.csv', versus, self.rankings[versus] )
+                    self._write_db('botfighter.csv', versus)
             
             del self.matches[match_id]
                 
@@ -182,7 +209,9 @@ class Bot(commands.Bot):
     def _validate_fighters(self, fighter, versus):
         refined_matches = {key: value for inner_dict in self.matches.values() if isinstance(inner_dict, dict) for key, value in inner_dict.items() if isinstance(value, list)}
         
-        if fighter in refined_matches and versus in refined_matches and self._get_matchkey(fighter) == self._get_matchkey(versus):
+        if versus == fighter:
+            return (False, "conflict_stophittingyourself")
+        elif fighter in refined_matches and versus in refined_matches and self._get_matchkey(fighter) == self._get_matchkey(versus):
             return (True, "true_samematch")
         elif fighter not in refined_matches and versus not in refined_matches:
             return (True, "true_newmatch")
@@ -247,7 +276,7 @@ class Bot(commands.Bot):
             print(r)
         file.close()
 
-    def _write_db(self, sheet, fighter, wins):
+    def _write_db(self, sheet, fighter):
         rows: List[Dict[str, int]] = []
 
         # Read existing data
