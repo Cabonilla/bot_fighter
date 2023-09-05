@@ -59,6 +59,29 @@ class Bot(commands.Bot):
 
     # ----------COMMANDS----------#
     @commands.command()
+    async def feature(self, ctx: commands.Context, arg=None, suggestion=None):
+        if not arg:
+            await ctx.send('USAGE: !feature ![cmd] "[suggestion]"')
+            return
+
+        if arg and not suggestion:
+            await ctx.send(f"Recommend a feature for {arg}, homie.")
+            return
+
+        if arg and suggestion:
+            self.append_to_features(arg, suggestion)
+            await ctx.send("Word. 🙏")
+            return
+
+    @commands.command() 
+    async def help(self, ctx: commands.Context, arg=None):
+        if not arg:
+            await ctx.send("USAGE: !help ![cmd]")
+
+        if arg == "!fight":
+            await ctx.send(f"!fight @insert_name - Fight contender. | !leaderboard - Current tournament's leaderboard. | !leaderboardalltime - Overall championship's leaderboard.")
+
+    @commands.command()
     async def leaderboard(self, ctx: commands.Context):
         rank = sorted(self.rankings.items(), key=lambda x: x[1], reverse=True)[:3]
         print(self.rankings)
@@ -119,7 +142,7 @@ class Bot(commands.Bot):
     #     # print(f'@{ctx.author.name}')
     #     # print(matchkey)
     #     return self._commence_fight(f'@{ctx.author.name}', arg, self.moves_easy, matchkey)
-    # @commands.cooldown(rate=1, per=5, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=5, bucket=commands.Bucket.channel)
     @commands.command()
     async def fight(self, ctx: commands.Context, arg = None):
         if arg == None:
@@ -325,6 +348,10 @@ class Bot(commands.Bot):
             writer = csv.DictWriter(file, fieldnames=["fighter", "wins"])
             writer.writeheader()
             writer.writerows(rows)
+
+    def append_to_features(self, arg, feature):
+        with open("features.txt", "a") as file:
+            file.write(f"{arg} - {feature}\n")
 
 bot = Bot()
 bot.run()

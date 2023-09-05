@@ -37,6 +37,8 @@ pipenv run python bot.py
 !surrender
 
 !leaderboard
+
+!surrender
 ```
 
 ## Features
