@@ -2,6 +2,15 @@
 Notes:
 Ideas:
 TODO:
-[ ] Fighters cannot challenge other fighters that are currently fighting.
-[ ] Maybe implement local backend w/ csv.
+[√] Fighters cannot challenge other fighters that are currently fighting.
+[√] Maybe implement local backend w/ csv.
 Activity Log:
+
+[2023-09-08]
+Notes:
+Ideas:
+TODO:
+[ ] Implement combo system.
+[ ] Maybe basic character select, Rio, Chun-Ki, Kant.
+Activity Log:
+- Testing current system.

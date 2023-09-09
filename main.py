@@ -142,7 +142,7 @@ class Bot(commands.Bot):
     #     # print(f'@{ctx.author.name}')
     #     # print(matchkey)
     #     return self._commence_fight(f'@{ctx.author.name}', arg, self.moves_easy, matchkey)
-    @commands.cooldown(rate=1, per=5, bucket=commands.Bucket.channel)
+    @commands.cooldown(rate=1, per=3, bucket=commands.Bucket.channel)
     @commands.command()
     async def fight(self, ctx: commands.Context, arg = None):
         if arg == None:
@@ -151,6 +151,10 @@ class Bot(commands.Bot):
 
         fighter = "@" + ctx.author.name.lower()
         versus = str(arg).lower()
+
+        if versus == "@botfighterannouncer":
+            await ctx.send("PLEASE DO NOT FIGHT THE ANNOUNCER! 🛑")
+            return
 
         user = await ctx.bot.fetch_users(names=[versus.lstrip("@")])
         if not user:
