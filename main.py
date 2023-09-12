@@ -18,7 +18,7 @@ class Bot(commands.Bot):
         self.initial_channels = [os.environ["CHANNEL"]]
         self.rankings = {}
         self.top_rankings = {"gold": "", "silver": "", "bronze": ""}
-        self.moves_easy = {"punches": [3, "👊"], "kicks": [4, "🦶"], "bites": [5, "🦷"]}
+        self.moves_easy = {"punches": [4, "👊"], "kicks": [5, "🦶"], "bites": [5, "🦷"]}
         self.combos_easy = {"crescentkick": [10, "🦶🦶", "🦵"], "molarcrunch": [10, "🦷🦷", "👄"], "superpunch": [10, "👊👊", "💪"]}
         # self.moves_medium = {
         #     "backhand slaps": 8,
@@ -55,7 +55,7 @@ class Bot(commands.Bot):
         if isinstance(error, commands.CommandOnCooldown):
             await ctx.send(
                 "SETTING UP NEXT MATCH. WAIT {:n} SECONDS. ⏲".format(
-                    math.floor(error.retry_after)
+                    math.ceil(error.retry_after)
                 )
             )
 
@@ -357,7 +357,7 @@ class Bot(commands.Bot):
                         print(cmbo[1], cmbo[2])
                         self.matches[match_id][rand_dfs][0] -= cmbo[0]
                         commentary += (
-                            f"{rand_ftr} {atk} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). "
+                            f"{rand_ftr} {cmbo[2]} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). "
                         )
 
         if fh <= 0:
