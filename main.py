@@ -6,6 +6,7 @@ from twitchio import Channel, User
 import csv
 from typing import List, Dict
 import math
+import collections
 
 class Bot(commands.Bot):
     # ----------INIT----------#
@@ -17,7 +18,8 @@ class Bot(commands.Bot):
         self.initial_channels = [os.environ["CHANNEL"]]
         self.rankings = {}
         self.top_rankings = {"gold": "", "silver": "", "bronze": ""}
-        self.moves_easy = {"punches": [4, "👊"], "kicks": [6, "🦶"], "bites": [5, "🦷"]}
+        self.moves_easy = {"punches": [3, "👊"], "kicks": [4, "🦶"], "bites": [5, "🦷"]}
+        self.combos_easy = {"crescentkick": [10, "🦶🦶", "🦵"], "molarcrunch": [10, "🦷🦷", "👄"], "superpunch": [10, "👊👊", "💪"]}
         # self.moves_medium = {
         #     "backhand slaps": 8,
         #     "roundhouse kicks": 9,
@@ -232,6 +234,10 @@ class Bot(commands.Bot):
         match_key = "".join([k for k, v in self.matches.items() if f"{fighter}" in v])
         return match_key
 
+    def _get_combo(self, cmbo):
+        match_key = "".join([k for k, v in self.combos_easy.items() if f"{cmbo}" in v])
+        return match_key
+
     def _add_fighters_to_match(self, fighter: str, versus: str, match_id: str):
         fhealth = 10
         vhealth = 10
@@ -289,11 +295,16 @@ class Bot(commands.Bot):
         elif fighter in refined_matches and versus not in refined_matches:
             return (False, "conflict_versuswrong")
 
-    def _commence_fight(self, fighter, versus, moveset, match_id, commentary=""):
+    def _commence_fight(self, fighter, versus, moveset, match_id, commentary="", atk_stk=None, mve_cnt = 1):
         fh = self.matches[match_id][fighter][0]
         vh = self.matches[match_id][versus][0]
-        # possible combo system using trees
-        if fh > 0 and vh > 0:
+
+        if not atk_stk:
+            atk_stk = {}
+
+        done = False
+
+        if fh > 0 and vh > 0 and not done:
             prtcpts = [fighter, versus]  # as in, participants
             rand_ftr = random.choice(prtcpts)
             rand_atk = random.choice(list(moveset.keys()))
@@ -308,20 +319,59 @@ class Bot(commands.Bot):
             if rand_atk:
                 atk = moveset[rand_atk][1]
 
+            if rand_ftr not in atk_stk:
+                atk_stk[rand_ftr] = [[atk, mve_cnt]]
+                # print(atk)
+            else:
+                atk_stk[rand_ftr].append([atk, mve_cnt])
+                # print(atk)
+
             commentary += (
                 f"{rand_ftr} {atk} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). "
             )
 
+            if self.matches[match_id][fighter][0] <= 0 or self.matches[match_id][versus][0] <= 0:
+                done = True
+
+            if not done:
+                moves = [i for i in atk_stk.values()]
+                p1moves = [j[0] for j in moves[0]]
+                p1moveidx = [j[1] for j in moves[0]]
+                print("p1movesidx: ", p1moveidx)
+                try:
+                    p2moves = [k[0] for k in moves[1]]
+                    p2moveidx = [k[1] for k in moves[1]]
+                    print("p2movesidx: ", p2moveidx)
+                except IndexError:
+                    p2moves = []
+                    
+                for cmbo in self.combos_easy.values():
+                    cmbo_arr = [*cmbo[1]]
+                    if any(cmbo_arr == list(x) for x in zip(*[p1moves[i:] for i in range(len(cmbo_arr))])) and p1moveidx[-1] - 1 == p1moveidx[-2]:
+                        print(cmbo[1], cmbo[2])
+                        self.matches[match_id][rand_dfs][0] -= cmbo[0]
+                        commentary += (
+                            f"{rand_ftr} {cmbo[2]} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). "
+                        )
+                    elif any(cmbo_arr == list(x) for x in zip(*[p2moves[i:] for i in range(len(cmbo_arr))])) and p2moveidx[-1] - 1 == p2moveidx[-2]:
+                        print(cmbo[1], cmbo[2])
+                        self.matches[match_id][rand_dfs][0] -= cmbo[0]
+                        commentary += (
+                            f"{rand_ftr} {atk} {rand_dfs} ({self.matches[match_id][rand_dfs][0]}). "
+                        )
+
         if fh <= 0:
             self.matches[match_id][versus][1] += 1
             commentary += f"😁{versus} KO'd 💀{fighter}!"
+            # print(atk_stk)
             return commentary
         elif vh <= 0:
             self.matches[match_id][fighter][1] += 1
             commentary += f"😁{fighter} KO'd 💀{versus}!"
+            # print(atk_stk)
             return commentary
         else:
-            return self._commence_fight(fighter, versus, moveset, match_id, commentary)
+            return self._commence_fight(fighter, versus, moveset, match_id, commentary, atk_stk, mve_cnt + 1)
 
     def _read_db(self, sheet):
         file = open(sheet, "r", encoding="utf8")

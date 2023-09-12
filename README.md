@@ -32,16 +32,23 @@ pipenv run python bot.py
 ## Usage/Examples
 
 ```bash
-!fight @insert_name
+!fight @insert_name → Throw hands.
 
-!surrender
+!surrender → Quit current fight.
 
-!leaderboard
+!leaderboard → Shows leaderboard for current tournament.
 
-!surrender
+!leaderboardalltime → Shows previously stored all-time win.
+
+!feature → Suggest a feature or report a bug.
+
+!help → Help system for usable chat commands.
 ```
 
 ## Features
 
 - Scoreboard for fighters.
 - Rage-quitting.
+- Rudimentary link combo system for fighter moves.
+- Recursive approach for minimal iteration.
+- Local data storage for leaderboards.
