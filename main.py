@@ -262,6 +262,9 @@ class Bot(commands.Bot):
             self.matches[match_id]["round"] = 1        
         
     def _validate_fighters(self, fighter, versus):
+        print(versus, fighter)
+        print(str(versus) == str(fighter))
+
         refined_matches = {
             key: value
             for inner_dict in self.matches.values()
@@ -270,10 +273,13 @@ class Bot(commands.Bot):
             if isinstance(value, list)
         }
 
-        if fighter is not User or versus is not User:
-            return (False, "conflict_notcontender")
-        elif versus == fighter:
+        if str(versus) == str(fighter):
+            print("HELLO, LAVERNE!")
             return (False, "conflict_stophittingyourself")
+        elif not isinstance(fighter, User) or not isinstance(versus, User):
+            return (False, "conflict_notcontender")
+        elif "@" not in str(versus) or "@" not in str(fighter):
+            return (False, "conflict_notcontender")
         elif not versus:
             return (False, "conflict_chooseversus")
         elif (
@@ -294,6 +300,8 @@ class Bot(commands.Bot):
             return (False, "conflict_versusbusy")
         elif fighter in refined_matches and versus not in refined_matches:
             return (False, "conflict_versuswrong")
+        else:
+            return
 
     def _commence_fight(self, fighter, versus, moveset, match_id, commentary="", atk_stk=None, mve_cnt = 1):
         fh = self.matches[match_id][fighter][0]
@@ -337,11 +345,11 @@ class Bot(commands.Bot):
                 moves = [i for i in atk_stk.values()]
                 p1moves = [j[0] for j in moves[0]]
                 p1moveidx = [j[1] for j in moves[0]]
-                print("p1movesidx: ", p1moveidx)
+                # print("p1movesidx: ", p1moveidx)
                 try:
                     p2moves = [k[0] for k in moves[1]]
                     p2moveidx = [k[1] for k in moves[1]]
-                    print("p2movesidx: ", p2moveidx)
+                    # print("p2movesidx: ", p2moveidx)
                 except IndexError:
                     p2moves = []
                     
